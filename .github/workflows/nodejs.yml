@@ -1,0 +1,32 @@
+# .github/workflows/nodejs.yml
+name: Node.js CI
+
+on:
+  push:
+    branches:
+      - feature/** # Trigger the build on commits to any feature branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 'auto'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Merge to Dev
+        uses: "peter-evans/create-pull-request@v5"
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: dev
+          title: "Merge feature branch to dev"
+          body: "Automatically merging feature branch to dev"
+          labels: "auto-merge"
