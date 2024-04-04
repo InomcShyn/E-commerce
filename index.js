@@ -2,6 +2,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const productRoutes = require("./src/routes/ProductRoutes");
+const blogRoutes = require("./src/routes/BlogRoutes")
 const userRoutes = require("./src/routes/UserRoutes");
 const authMiddleware = require("./src/middlewares/authMiddleware");
 const connectToDatabase = require("./src/config/dbConnect");
@@ -30,7 +31,8 @@ app.use(express.json());
 connectToDatabase();
 
 // Routes
-app.use("/products", productRoutes);
+app.use("/products", authMiddleware, productRoutes);
+app.use("/blogs", blogRoutes);
 app.use("/users", userRoutes);
 
 // Serve Swagger UI

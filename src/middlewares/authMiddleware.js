@@ -26,13 +26,27 @@ function authMiddleware(req, res, next) {
         const newAccessToken = generateAccessToken({
           id: user.id,
           username: user.username,
+          role: user.role
         });
-        req.user = user;
+
+        // Set isAdmin property based on user's role
+        const isAdmin = user.role === "admin";
+
+        req.user = {
+          ...user,
+          isAdmin // Add isAdmin property to req.user
+        };
         req.token = newAccessToken;
         next();
       });
     } else {
-      req.user = user;
+      // Set isAdmin property based on user's role
+      const isAdmin = user.role === "admin";
+
+      req.user = {
+        ...user,
+        isAdmin // Add isAdmin property to req.user
+      };
       next();
     }
   });

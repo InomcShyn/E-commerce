@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("../controller/UserController");
+const authMiddleware = require("../middlewares/authMiddleware")
 
 /**
  * @swagger
@@ -88,5 +89,55 @@ router.post("/login", userController.loginUser);
 
 // Refresh access token using refresh token
 router.post("/refresh-token", userController.refreshAccessToken);
+
+router.put("/:id", userController.updateUser);
+
+router.delete("/:id", userController.deleteUser);
+
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   get:
+ *     summary: Get user by ID
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID of the user
+ *     responses:
+ *       200:
+ *         description: User found
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/:id", authMiddleware, userController.getUserById); // Requires admin privileges
+
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Get all users
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of users
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/all-users", authMiddleware, userController.getAllUsers); // Requires admin privileges
+
+
 
 module.exports = router;
