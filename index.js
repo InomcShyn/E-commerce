@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const productRoutes = require("./src/routes/ProductRoutes");
 const blogRoutes = require("./src/routes/BlogRoutes")
 const userRoutes = require("./src/routes/UserRoutes");
+const categoryRoutes = require("./src/routes/ProdcategoryRoutes");
 const authMiddleware = require("./src/middlewares/authMiddleware");
 const connectToDatabase = require("./src/config/dbConnect");
 const cors = require("cors"); 
@@ -34,6 +35,7 @@ connectToDatabase();
 app.use("/products", authMiddleware, productRoutes);
 app.use("/blogs", blogRoutes);
 app.use("/users", userRoutes);
+app.use("/category", categoryRoutes);
 
 // Serve Swagger UI
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
