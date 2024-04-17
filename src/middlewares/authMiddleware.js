@@ -1,24 +1,26 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const asyncHandler = require("express-async-handler");
 
 dotenv.config();
-const secretKey = process.env.JWT_SECRET;
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
-function authMiddleware(req, res, next) {
-  const token = req.header("Authorization");
+const authMiddleware = asyncHandler(async (req, res, next) => {
+  const accessToken = req.header("Authorization");
 
-  if (!token) {
+  if (!accessToken) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  jwt.verify(token.replace("Bearer ", ""), secretKey, (err, user) => {
+  jwt.verify(accessToken.replace("Bearer ", ""), ACCESS_TOKEN_SECRET, (err, user) => {
     if (err) {
       const refreshToken = req.header("Refresh-Token");
       if (!refreshToken) {
         return res.status(403).json({ error: "Invalid token" });
       }
 
-      jwt.verify(refreshToken, secretKey, (err, user) => {
+      jwt.verify(refreshToken, REFRESH_TOKEN_SECRET, (err, user) => {
         if (err) {
           return res.status(403).json({ error: "Invalid refresh token" });
         }
@@ -26,35 +28,23 @@ function authMiddleware(req, res, next) {
         const newAccessToken = generateAccessToken({
           id: user.id,
           username: user.username,
-          role: user.role
+          role: user.role  // Include the role in the new access token
         });
-
-        // Set isAdmin property based on user's role
-        const isAdmin = user.role === "admin";
-
-        req.user = {
-          ...user,
-          isAdmin // Add isAdmin property to req.user
-        };
+        req.user = user;
         req.token = newAccessToken;
         next();
       });
     } else {
-      // Set isAdmin property based on user's role
-      const isAdmin = user.role === "admin";
-
-      req.user = {
-        ...user,
-        isAdmin // Add isAdmin property to req.user
-      };
+      req.user = user; 
+      req.user.role = user.role 
       next();
     }
   });
-}
+});
 
-// Define the generateAccessToken function
+
 function generateAccessToken(payload) {
-  return jwt.sign(payload, secretKey, { expiresIn: "1h" });
+  return jwt.sign(payload, ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
 }
 
-module.exports = authMiddleware;
+module.exports =  authMiddleware;

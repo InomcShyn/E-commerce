@@ -55,7 +55,7 @@ class UserController {
       if (!isPasswordValid) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
-  
+
       const token = generateAccessToken({
         id: user._id,
         username: user.username,
@@ -66,14 +66,13 @@ class UserController {
         username: user.username,
         role: user.role,
       });
-  
+
       res.json({ token, refreshToken });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Unable to log in. Please try again later." });
+      res.status(500).json({ error: "Unable to log in" });
     }
   }
-
+  
   async refreshAccessToken(req, res) {
     const refreshToken = req.header("Refresh-Token");
 
@@ -95,16 +94,19 @@ class UserController {
     });
   }
 
+  async getAllUsers(req, res) {
+    try {
+      const users = await userRepository.getAllUsers();
+      res.json(users);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Unable to get users" });
+    }
+  }
 
   async getUserById(req, res) {
     try {
       const { id } = req.params;
-      const { isAdmin } = req.user; // Get the isAdmin property from the authenticated user
-
-      if (!isAdmin) {
-        return res.status(403).json({ error: "Unauthorized. Requires admin role." });
-      }
-
       const user = await userRepository.getUserById(id);
 
       if (!user) {
@@ -117,49 +119,6 @@ class UserController {
       res.status(500).json({ error: "Unable to get user" });
     }
   }
-  
-  async getAllUsers(req, res) {
-    try {
-      const { isAdmin } = req.user; // Get the isAdmin property from the authenticated user
-
-      if (!isAdmin) {
-        return res.status(403).json({ error: "Unauthorized. Requires admin role." });
-      }
-
-      const users = await userRepository.getAllUsers();
-      res.json(users);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Unable to get users" });
-    }
-  }
-  async blockUser(req, res) {
-    try {
-      const { id } = req.params;
-      const blockedUser = await userRepository.blockUser(id);
-      if (!blockedUser) {
-        return res.status(404).json({ error: "User not found" });
-      }
-      res.json(blockedUser);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Unable to block user" });
-    }
-  }
-
-  async unblockUser(req, res) {
-    try {
-      const { id } = req.params;
-      const unblockedUser = await userRepository.unblockUser(id);
-      if (!unblockedUser) {
-        return res.status(404).json({ error: "User not found" });
-      }
-      res.json(unblockedUser);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Unable to unblock user" });
-    }
-  }
 
   async updateUser(req, res) {
     try {
@@ -169,7 +128,6 @@ class UserController {
         return res.status(400).json({ error: "User ID is required" });
       }
 
-      // Create an object with the updated fields
       const updatedFields = {
         firstName,
         lastName,
@@ -177,15 +135,53 @@ class UserController {
         phone,
       };
 
-      // Call the updateUser method from the repository
+      // Update user using the UserRepository
       const updatedUser = await userRepository.updateUser(userId, updatedFields);
 
-      // If user is updated successfully, send success response
       res.json({ message: "User updated successfully", user: updatedUser });
     } catch (err) {
+      // Handle errors appropriately
+      if (err.message === "User not found") {
+        return res.status(404).json({ error: "User not found" });
+      }
       console.error(err);
-      // If user not found or any other error occurs, send error response with details
-      res.status(500).json({ error: "Unable to update user", details: err.message });
+      res.status(500).json({ error: "Unable to update user" });
+    }
+  }
+
+  async blockUser(req, res) {
+    const { id } = req.params;
+    validateMongoDbId(id);
+
+    try {
+      const blockusr = await User.findByIdAndUpdate(
+        id,
+        {
+          isBlocked: true,
+        },
+        {
+          new: true,
+        }
+      );
+      res.json(blockusr);
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+  
+  async unblockUser(req, res) {
+    const { id } = req.params;
+    validateMongoDbId(id);
+
+    try {
+      const unblock = await UserRepository.unblockUser(id);
+      res.json({
+        message: "User Unblocked",
+        unblock, // Optional: Include the updated user object in the response
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Unable to unblock user" });
     }
   }
 
@@ -200,6 +196,50 @@ class UserController {
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Unable to delete user" });
+    }
+  }
+
+  async getWishlist(req, res) {
+    const { _id } = req.user;
+    try {
+      const user = await userRepository.getUserWishlist(_id);
+      res.json(user);
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+
+  async removeFromWishlist(req, res) {
+    const userId = req.user._id;
+    const productId = req.params.id;
+    try {
+      await userRepository.removeFromWishlist(userId, productId);
+      const user = await userRepository.getUserById(userId);
+      res.json({ user });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+
+  async getWishlist(req, res) {
+    const userId = req.user._id;
+    try {
+      const wishlist = await userRepository.getWishlist(userId);
+      const user = await userRepository.getUserById(userId);
+      res.json({ user, wishlist });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+  async addToWishlist(req, res) {
+    const userId = req.user._id;
+    const productId = req.params.id;
+    try {
+      await userRepository.addToWishlist(userId, productId);
+      const user = await userRepository.getUserById(userId);
+      res.json({ user });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
     }
   }
 }

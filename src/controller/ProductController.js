@@ -58,6 +58,55 @@ class ProductController {
       res.status(500).json({ error: "Unable to delete the product" });
     }
   }
+  
+  async addToWishlist(userId, productId) {
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      const alreadyAdded = user.wishlist.includes(productId);
+
+      if (alreadyAdded) {
+        user.wishlist.pull(productId);
+      } else {
+        user.wishlist.push(productId);
+      }
+
+      const updatedUser = await user.save();
+      return updatedUser;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async rateProduct(req, res) {
+    const userId = req.user._id;
+    const productId = req.params.id;
+    const { star, comment } = req.body;
+    try {
+      const product = await productRepository.getProductById(productId);
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      const alreadyRated = product.ratings.find(
+        (rating) => rating.postedBy.toString() === userId.toString()
+      );
+
+      if (alreadyRated) {
+        return res.status(400).json({ error: "You have already rated this product" });
+      }
+
+      product.ratings.push({ star, comment, postedBy: userId });
+      const updatedProduct = await productRepository.rateProduct(product);
+      res.json(updatedProduct);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
 }
+
 
 module.exports = new ProductController();

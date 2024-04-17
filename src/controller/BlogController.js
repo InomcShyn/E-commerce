@@ -1,5 +1,7 @@
 const Blog = require("../models/BlogModel");
+const User = require("../models/UserModel");
 const validateMongoDbId = require("../utils/validateMongodbId");
+const fs = require("fs");
 
 class BlogController {
   async createBlog(req, res) {
@@ -7,7 +9,7 @@ class BlogController {
       const newBlog = await Blog.create(req.body);
       res.json(newBlog);
     } catch (error) {
-      res.status(500).json({ error: "Unable to create the blog" });
+      throw new Error(error);
     }
   }
 
@@ -15,12 +17,12 @@ class BlogController {
     const { id } = req.params;
     validateMongoDbId(id);
     try {
-      const updatedBlog = await Blog.findByIdAndUpdate(id, req.body, {
+      const updateBlog = await Blog.findByIdAndUpdate(id, req.body, {
         new: true,
       });
-      res.json(updatedBlog);
+      res.json(updateBlog);
     } catch (error) {
-      res.status(500).json({ error: "Unable to update the blog" });
+      throw new Error(error);
     }
   }
 
@@ -28,24 +30,28 @@ class BlogController {
     const { id } = req.params;
     validateMongoDbId(id);
     try {
-      const blog = await Blog.findById(id).populate("likes").populate("dislikes");
-      const updatedViews = await Blog.findByIdAndUpdate(
+      const getBlog = await Blog.findById(id)
+        .populate("likes")
+        .populate("dislikes");
+      const updateViews = await Blog.findByIdAndUpdate(
         id,
-        { $inc: { numViews: 1 } },
+        {
+          $inc: { numViews: 1 },
+        },
         { new: true }
       );
-      res.json(blog);
+      res.json(getBlog);
     } catch (error) {
-      res.status(500).json({ error: "Unable to get the blog" });
+      throw new Error(error);
     }
   }
 
   async getAllBlogs(req, res) {
     try {
-      const blogs = await Blog.find();
-      res.json(blogs);
+      const getBlogs = await Blog.find();
+      res.json(getBlogs);
     } catch (error) {
-      res.status(500).json({ error: "Unable to get blogs" });
+      throw new Error(error);
     }
   }
 
@@ -56,75 +62,105 @@ class BlogController {
       const deletedBlog = await Blog.findByIdAndDelete(id);
       res.json(deletedBlog);
     } catch (error) {
-      res.status(500).json({ error: "Unable to delete the blog" });
+      throw new Error(error);
     }
   }
 
   async liketheBlog(req, res) {
     const { blogId } = req.body;
     validateMongoDbId(blogId);
-    const loginUserId = req?.user?._id;
+    // Find the blog which you want to be liked
     const blog = await Blog.findById(blogId);
-
-    if (!blog) {
-      return res.status(404).json({ error: "Blog not found" });
-    }
-
-    const alreadyDisliked = blog?.dislikes?.includes(loginUserId);
+    // find the login user
+    const loginUserId = req?.user?._id;
+    // find if the user has liked the blog
+    const isLiked = blog?.isLiked;
+    // find if the user has disliked the blog
+    const alreadyDisliked = blog?.dislikes?.find(
+      (userId) => userId?.toString() === loginUserId?.toString()
+    );
     if (alreadyDisliked) {
-      blog.dislikes.pull(loginUserId);
-      blog.isDisliked = false;
+      const blog = await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { dislikes: loginUserId },
+          isDisliked: false,
+        },
+        { new: true }
+      );
+      res.json(blog);
     }
-
-    const alreadyLiked = blog?.likes?.includes(loginUserId);
-    if (alreadyLiked) {
-      blog.likes.pull(loginUserId);
-      blog.isLiked = false;
+    if (isLiked) {
+      const blog = await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { likes: loginUserId },
+          isLiked: false,
+        },
+        { new: true }
+      );
+      res.json(blog);
     } else {
-      blog.likes.push(loginUserId);
-      blog.isLiked = true;
-    }
-
-    try {
-      const updatedBlog = await blog.save();
-      res.json(updatedBlog);
-    } catch (error) {
-      res.status(500).json({ error: "Unable to like the blog" });
+      const blog = await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $push: { likes: loginUserId },
+          isLiked: true,
+        },
+        { new: true }
+      );
+      res.json(blog);
     }
   }
 
   async disliketheBlog(req, res) {
     const { blogId } = req.body;
     validateMongoDbId(blogId);
-    const loginUserId = req?.user?._id;
+    // Find the blog which you want to be liked
     const blog = await Blog.findById(blogId);
-
-    if (!blog) {
-      return res.status(404).json({ error: "Blog not found" });
-    }
-
-    const alreadyLiked = blog?.likes?.includes(loginUserId);
+    // find the login user
+    const loginUserId = req?.user?._id;
+    // find if the user has liked the blog
+    const isDisLiked = blog?.isDisliked;
+    // find if the user has disliked the blog
+    const alreadyLiked = blog?.likes?.find(
+      (userId) => userId?.toString() === loginUserId?.toString()
+    );
     if (alreadyLiked) {
-      blog.likes.pull(loginUserId);
-      blog.isLiked = false;
+      const blog = await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { likes: loginUserId },
+          isLiked: false,
+        },
+        { new: true }
+      );
+      res.json(blog);
     }
-
-    const alreadyDisliked = blog?.dislikes?.includes(loginUserId);
-    if (alreadyDisliked) {
-      blog.dislikes.pull(loginUserId);
-      blog.isDisliked = false;
+    if (isDisLiked) {
+      const blog = await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { dislikes: loginUserId },
+          isDisliked: false,
+        },
+        { new: true }
+      );
+      res.json(blog);
     } else {
-      blog.dislikes.push(loginUserId);
-      blog.isDisliked = true;
-    }
-
-    try {
-      const updatedBlog = await blog.save();
-      res.json(updatedBlog);
-    } catch (error) {
-      res.status(500).json({ error: "Unable to dislike the blog" });
+      const blog = await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $push: { dislikes: loginUserId },
+          isDisliked: true,
+        },
+        { new: true }
+      );
+      res.json(blog);
     }
   }
+
+  
 }
 
 module.exports = new BlogController();

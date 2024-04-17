@@ -1,52 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const productController = require("../controller/ProductController");
+const authMiddleware  = require("../middlewares/authMiddleware");
+const isAdmin  = require("../middlewares/isAdmin");
 
 /**
  * @swagger
  * tags:
  *   name: Products
- *   description: Product management
+ *   description: API endpoints for managing products
  */
-
-/**
- * @swagger
- * /products:
- *   post:
- *     summary: Create a new product
- *     tags: [Products]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               title:
- *                 type: string
- *               description:
- *                 type: string
- *               price:
- *                 type: number
- *               quantity:
- *                 type: number
- *               category:
- *                 type: string
- *             required:
- *               - title
- *               - description
- *               - price
- *               - quantity
- *               - category
- *     responses:
- *       201:
- *         description: Product created successfully
- *       400:
- *         description: Bad request
- *       500:
- *         description: Internal server error
- */
-router.post("/", productController.createProduct);
 
 /**
  * @swagger
@@ -56,9 +19,7 @@ router.post("/", productController.createProduct);
  *     tags: [Products]
  *     responses:
  *       200:
- *         description: Successful operation
- *       500:
- *         description: Internal server error
+ *         description: List of products
  */
 router.get("/", productController.getAllProducts);
 
@@ -71,33 +32,24 @@ router.get("/", productController.getAllProducts);
  *     parameters:
  *       - in: path
  *         name: id
+ *         description: ID of the product
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: Product ID
  *     responses:
  *       200:
- *         description: Successful operation
- *       404:
- *         description: Product not found
- *       500:
- *         description: Internal server error
+ *         description: Product details
  */
 router.get("/:id", productController.getProductById);
 
 /**
  * @swagger
- * /products/{id}:
- *   put:
- *     summary: Update a product by ID
+ * /products:
+ *   post:
+ *     summary: Create a new product
  *     tags: [Products]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
- *         required: true
- *         description: Product ID
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -115,15 +67,67 @@ router.get("/:id", productController.getProductById);
  *                 type: number
  *               category:
  *                 type: string
+ *             example:
+ *               title: "Sample Product"
+ *               description: "This is a sample product"
+ *               price: 20
+ *               quantity: 10
+ *               category: "Sample Category"
+ *     responses:
+ *       201:
+ *         description: New product created
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/", authMiddleware, isAdmin, productController.createProduct);
+
+/**
+ * @swagger
+ * /products/{id}:
+ *   put:
+ *     summary: Update a product by ID
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         description: ID of the product
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               quantity:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *             example:
+ *               title: "Updated Product"
+ *               description: "Updated product description"
+ *               price: 25
+ *               quantity: 15
+ *               category: "Updated Category"
  *     responses:
  *       200:
- *         description: Product updated successfully
+ *         description: Updated product
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Product not found
- *       500:
- *         description: Internal server error
  */
-router.put("/:id", productController.updateProduct);
+router.put("/:id", authMiddleware, isAdmin, productController.updateProduct);
 
 /**
  * @swagger
@@ -131,21 +135,25 @@ router.put("/:id", productController.updateProduct);
  *   delete:
  *     summary: Delete a product by ID
  *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         description: ID of the product
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: Product ID
  *     responses:
- *       204:
- *         description: Product deleted successfully
+ *       200:
+ *         description: Product deleted
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Product not found
- *       500:
- *         description: Internal server error
  */
-router.delete("/:id", productController.deleteProduct);
+router.delete("/:id", authMiddleware, isAdmin, productController.deleteProduct);
+
+router.put("/wishlist", authMiddleware, productController.addToWishlist);
 
 module.exports = router;

@@ -1,7 +1,7 @@
-const Category = require("../models/ProdcategoryModel");
+const Category = require("../models/BCatModel");
 const validateMongoDbId = require("../utils/validateMongodbId");
 
-class ProdcategoryController {
+class BCatController {
   async createCategory(req, res) {
     try {
       const newCategory = await Category.create(req.body);
@@ -48,12 +48,12 @@ class ProdcategoryController {
 
   async getallCategory(req, res) {
     try {
-      const getallCategories = await Category.find();
-      res.json(getallCategories);
+      const getallCategory = await Category.find();
+      res.json(getallCategory);
     } catch (error) {
       throw new Error(error);
     }
   }
 }
 
-module.exports = new ProdcategoryController();
+module.exports = new BCatController();

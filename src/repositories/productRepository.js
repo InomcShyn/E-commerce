@@ -20,6 +20,23 @@ class ProductRepository {
   async deleteProduct(id) {
     return await Product.findByIdAndDelete(id);
   }
+
+  async addToWishlist(req, res) {
+    const { _id } = req.user;
+    const { prodId } = req.body;
+
+    try {
+      const updatedUser = await productController.addToWishlist(_id, prodId);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error adding to wishlist:", error);
+      res.status(500).json({ error: "Unable to add to wishlist" });
+    }
+  }
+
+  async rateProduct(product) {
+    return await product.save();
+  }
 }
 
 module.exports = new ProductRepository();

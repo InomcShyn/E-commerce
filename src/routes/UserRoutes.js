@@ -1,143 +1,39 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("../controller/UserController");
-const authMiddleware = require("../middlewares/authMiddleware")
+const authMiddleware  = require("../middlewares/authMiddleware");
+const isAdmin = require("../middlewares/isAdmin")
 
 /**
  * @swagger
  * tags:
  *   name: Users
- *   description: User management
+ * 
+ *   description: API endpoints for managing users
  */
 
-/**
- * @swagger
- * /users/register:
- *   post:
- *     summary: Create a new user
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               firstName:
- *                 type: string
- *               lastName:
- *                 type: string
- *               email:
- *                 type: string
- *               phone:
- *                 type: string
- *               username:
- *                 type: string
- *               password:
- *                 type: string
- *             required:
- *               - firstName
- *               - lastName
- *               - email
- *               - phone
- *               - username
- *               - password
- *     responses:
- *       201:
- *         description: User registered successfully
- *       500:
- *         description: Internal server error
- */
+// POST /users/register
 router.post("/register", userController.registerUser);
 
-/**
- * @swagger
- * /users/login:
- *   post:
- *     summary: User login
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *               password:
- *                 type: string
- *             required:
- *               - username
- *               - password
- *     responses:
- *       200:
- *         description: User login successful
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 token:
- *                   type: string
- *       401:
- *         description: Unauthorized
- *       500:
- *         description: Internal server error
- */
+// POST /users/login
 router.post("/login", userController.loginUser);
 
-// Refresh access token using refresh token
-router.post("/refresh-token", userController.refreshAccessToken);
+// GET /users/getallusers
+router.get("/getallusers", authMiddleware, isAdmin, userController.getAllUsers);
 
-router.put("/:id", userController.updateUser);
+// GET /users/getuser/{id}
+router.get("/getuser/:id", authMiddleware, isAdmin, userController.getUserById);
 
-router.delete("/:id", userController.deleteUser);
+// DELETE /users/deleteuser/{id}
+router.delete("/deleteuser/:id", authMiddleware, userController.deleteUser);
 
+// GET /users/wishlist
+router.get("/wishlist", authMiddleware, userController.getWishlist);
 
-/**
- * @swagger
- * /users/{id}:
- *   get:
- *     summary: Get user by ID
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
- *         required: true
- *         description: ID of the user
- *     responses:
- *       200:
- *         description: User found
- *       401:
- *         description: Unauthorized
- *       500:
- *         description: Internal server error
- */
-router.get("/:id", authMiddleware, userController.getUserById); // Requires admin privileges
+router.put("/block-user/:id", authMiddleware, isAdmin, userController.blockUser);
 
-/**
- * @swagger
- * /users:
- *   get:
- *     summary: Get all users
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of users
- *       401:
- *         description: Unauthorized
- *       500:
- *         description: Internal server error
- */
-router.get("/all-users", authMiddleware, userController.getAllUsers); // Requires admin privileges
+router.put("/unblock-user/:id", authMiddleware, isAdmin, userController.unblockUser);
 
-
+router.put("/:id", authMiddleware, userController.updateUser);
 
 module.exports = router;

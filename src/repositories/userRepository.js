@@ -34,27 +34,20 @@ class UserRepository {
   }
 
   async updateUser(id, updatedFields) {
-    try {
-      const updatedUser = await User.findByIdAndUpdate(
-        id,
-        updatedFields,
-        { new: true }
-      );
-
-      // Check if updatedUser is null, which means user was not found
-      if (!updatedUser) {
-        throw new Error("User not found");
-      }
-
-      return updatedUser;
-    } catch (error) {
-      console.error("Error updating user:", error);
-      throw new Error("Unable to update user");
-    }
+    return await User.findByIdAndUpdate(id, updatedFields, { new: true });
   }
 
   async deleteUser(id) {
     return await User.findByIdAndDelete(id);
+  }
+  async getUserWishlist(userId) {
+    const { _id } = req.user;
+    try {
+      const findUser = await User.findById(_id).populate("wishlist");
+      res.json(findUser);
+    } catch (error) {
+      throw new Error(error);
+    }
   }
 }
 

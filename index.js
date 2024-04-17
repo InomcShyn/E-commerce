@@ -5,7 +5,10 @@ const productRoutes = require("./src/routes/ProductRoutes");
 const blogRoutes = require("./src/routes/BlogRoutes")
 const userRoutes = require("./src/routes/UserRoutes");
 const categoryRoutes = require("./src/routes/ProdcategoryRoutes");
-const authMiddleware = require("./src/middlewares/authMiddleware");
+const bcateRoutes = require("./src/routes/BCatRoutes");
+const brandRouter = require("./src/routes/BrandRoute");
+const couponRouter = require("./src/routes/CouponRoute");
+const enqRouter = require("./src/routes/EnqRoute");
 const connectToDatabase = require("./src/config/dbConnect");
 const cors = require("cors"); 
 const rateLimitMiddleware = require("./src/middlewares/rateLimitMiddleware");
@@ -32,10 +35,14 @@ app.use(express.json());
 connectToDatabase();
 
 // Routes
-app.use("/products", authMiddleware, productRoutes);
+app.use("/products", productRoutes);
 app.use("/blogs", blogRoutes);
 app.use("/users", userRoutes);
 app.use("/category", categoryRoutes);
+app.use("/blogcategory", bcateRoutes);
+app.use("/brand", brandRouter);
+app.use("/coupon", couponRouter);
+app.use("/enquiry", enqRouter);
 
 // Serve Swagger UI
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
