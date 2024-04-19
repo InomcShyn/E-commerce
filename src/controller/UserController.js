@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const userRepository = require("../repositories/userRepository");
+const productRepository = require("../repositories/productRepository");
 const dotenv = require("dotenv");
 
 dotenv.config();
@@ -200,22 +201,10 @@ class UserController {
   }
 
   async getWishlist(req, res) {
-    const { _id } = req.user;
+    const userId = req.user;
     try {
-      const user = await userRepository.getUserWishlist(_id);
+      const user = await userRepository.getUserWishlist(userId);
       res.json(user);
-    } catch (error) {
-      throw new Error(error);
-    }
-  }
-
-  async removeFromWishlist(req, res) {
-    const userId = req.user._id;
-    const productId = req.params.id;
-    try {
-      await userRepository.removeFromWishlist(userId, productId);
-      const user = await userRepository.getUserById(userId);
-      res.json({ user });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
@@ -231,15 +220,37 @@ class UserController {
       res.status(400).json({ error: err.message });
     }
   }
-  async addToWishlist(req, res) {
+
+  async userCart(req, res) {
+    const { cart } = req.body;
     const userId = req.user._id;
-    const productId = req.params.id;
     try {
-      await userRepository.addToWishlist(userId, productId);
-      const user = await userRepository.getUserById(userId);
-      res.json({ user });
-    } catch (err) {
-      res.status(400).json({ error: err.message });
+      const userCart = await userRepository.saveUserCart(userId, cart);
+      res.json(userCart);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  // Method to get user's cart
+  async getUserCart(req, res) {
+    const userId = req.user._id;
+    try {
+      const userCart = await userRepository.getUserCart(userId);
+      res.json(userCart);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  // Method to empty user's cart
+  async emptyCart(req, res) {
+    const userId = req.user._id;
+    try {
+      await userRepository.emptyCart(userId);
+      res.json({ message: "Cart emptied successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
     }
   }
 }

@@ -1,4 +1,6 @@
 const User = require("../models/UserModel");
+const Cart = require("../models/CartModel");
+const Product = require("../models/ProductModel");
 
 class UserRepository {
   async createUser(data) {
@@ -48,7 +50,63 @@ class UserRepository {
       throw new Error(error);
     }
   }
+
+  async findUserById(userId) {
+    return await User.findById(userId);
+  }
+
+  // Method to find a user's cart
+  async findUserCart(userId) {
+    return await Cart.findOne({ orderby: userId });
+  }
+
+  // Method to save or update user's cart
+  async saveUserCart(userId, cart) {
+    let products = [];
+    let cartTotal = 0;
+
+    for (let i = 0; i < cart.length; i++) {
+      const { _id, count, color } = cart[i];
+      const product = await Product.findById(_id).select("price");
+
+      if (product) {
+        products.push({
+          product: _id,
+          count,
+          color,
+          price: product.price
+        });
+
+        cartTotal += product.price * count;
+      }
+    }
+
+    const existingCart = await Cart.findOne({ orderby: userId });
+
+    if (existingCart) {
+      existingCart.products = products;
+      existingCart.cartTotal = cartTotal;
+      return await existingCart.save();
+    } else {
+      return await new Cart({
+        products,
+        cartTotal,
+        orderby: userId
+      }).save();
+    }
+  }
+
+  // Method to get user's cart
+  async getUserCart(userId) {
+    return await Cart.findOne({ orderby: userId }).populate("products.product");
+  }
+
+  // Method to empty user's cart
+  async emptyCart(userId) {
+    return await Cart.findOneAndRemove({ orderby: userId });
+  }
 }
+
 
 
 module.exports = new UserRepository();

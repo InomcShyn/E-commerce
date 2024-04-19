@@ -36,4 +36,10 @@ router.put("/block-user/:id", authMiddleware, isAdmin, userController.blockUser)
 
 router.put("/unblock-user/:id", authMiddleware, isAdmin, userController.unblockUser);
 
+router.delete("/empty-cart", authMiddleware, userController.emptyCart);
+
+router.post("/cart", authMiddleware, userController.userCart);
+
+router.get("/cart", authMiddleware, userController.getUserCart);
+
 module.exports = router;
