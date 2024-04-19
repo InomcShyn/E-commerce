@@ -86,7 +86,7 @@ class UserController {
       }
 
       const newAccessToken = generateAccessToken({
-        id: user.id,
+        id: user._id,
         username: user.username,
         role: user.role,
       });

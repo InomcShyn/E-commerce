@@ -26,7 +26,7 @@ const authMiddleware = asyncHandler(async (req, res, next) => {
         }
 
         const newAccessToken = generateAccessToken({
-          id: user.id,
+          id: user._id,
           username: user.username,
           role: user.role  // Include the role in the new access token
         });

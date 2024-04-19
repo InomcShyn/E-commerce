@@ -18,6 +18,11 @@ router.post("/register", userController.registerUser);
 // POST /users/login
 router.post("/login", userController.loginUser);
 
+router.put("/:id", authMiddleware, userController.updateUser);
+
+// GET /users/wishlist
+router.get("/wishlist", authMiddleware, userController.getWishlist);
+
 // GET /users/getallusers
 router.get("/getallusers", authMiddleware, isAdmin, userController.getAllUsers);
 
@@ -27,13 +32,8 @@ router.get("/getuser/:id", authMiddleware, isAdmin, userController.getUserById);
 // DELETE /users/deleteuser/{id}
 router.delete("/deleteuser/:id", authMiddleware, userController.deleteUser);
 
-// GET /users/wishlist
-router.get("/wishlist", authMiddleware, userController.getWishlist);
-
 router.put("/block-user/:id", authMiddleware, isAdmin, userController.blockUser);
 
 router.put("/unblock-user/:id", authMiddleware, isAdmin, userController.unblockUser);
-
-router.put("/:id", authMiddleware, userController.updateUser);
 
 module.exports = router;

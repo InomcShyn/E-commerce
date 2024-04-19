@@ -4,6 +4,8 @@ const productController = require("../controller/ProductController");
 const authMiddleware  = require("../middlewares/authMiddleware");
 const isAdmin  = require("../middlewares/isAdmin");
 
+
+router.post("/rate/:id", authMiddleware, productController.rateProduct);
 /**
  * @swagger
  * tags:
@@ -41,6 +43,8 @@ router.get("/", productController.getAllProducts);
  *         description: Product details
  */
 router.get("/:id", productController.getProductById);
+
+router.put("/wishlist", authMiddleware, productController.addToWishlist);
 
 /**
  * @swagger
@@ -154,6 +158,6 @@ router.put("/:id", authMiddleware, isAdmin, productController.updateProduct);
  */
 router.delete("/:id", authMiddleware, isAdmin, productController.deleteProduct);
 
-router.put("/wishlist", authMiddleware, productController.addToWishlist);
+
 
 module.exports = router;

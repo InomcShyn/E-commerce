@@ -22,11 +22,11 @@ class ProductRepository {
   }
 
   async addToWishlist(req, res) {
-    const { _id } = req.user;
+    const { id } = req.user;
     const { prodId } = req.body;
 
     try {
-      const updatedUser = await productController.addToWishlist(_id, prodId);
+      const updatedUser = await productController.addToWishlist(id, prodId);
       res.json(updatedUser);
     } catch (error) {
       console.error("Error adding to wishlist:", error);

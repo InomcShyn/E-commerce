@@ -40,10 +40,9 @@ class UserRepository {
   async deleteUser(id) {
     return await User.findByIdAndDelete(id);
   }
-  async getUserWishlist(userId) {
-    const { _id } = req.user;
+  async getUserWishlist(id) {
     try {
-      const findUser = await User.findById(_id).populate("wishlist");
+      const findUser = await User.findById(id).populate("wishlist");
       res.json(findUser);
     } catch (error) {
       throw new Error(error);

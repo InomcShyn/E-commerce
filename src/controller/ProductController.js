@@ -1,5 +1,6 @@
 // controllers/productController.js
 const productRepository = require("../repositories/productRepository");
+const userRepository = require("../repositories/userRepository");
 
 class ProductController {
   async createProduct(req, res) {
@@ -59,9 +60,10 @@ class ProductController {
     }
   }
   
-  async addToWishlist(userId, productId) {
+  async addToWishlist(req,res) {
     try {
-      const user = await User.findById(userId);
+      const {userId,productId} = req.body
+      const user = await userRepository.getUserById(userId);
       if (!user) {
         throw new Error("User not found");
       }
@@ -75,14 +77,14 @@ class ProductController {
       }
 
       const updatedUser = await user.save();
-      return updatedUser;
+      return res.status(200).json(updatedUser);
     } catch (error) {
       throw new Error(error.message);
     }
   }
 
   async rateProduct(req, res) {
-    const userId = req.user._id;
+    const userId = req.user.id;
     const productId = req.params.id;
     const { star, comment } = req.body;
     try {
