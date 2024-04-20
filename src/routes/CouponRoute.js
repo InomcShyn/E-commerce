@@ -75,7 +75,7 @@ router.post("/", authMiddleware, isAdmin, CouponController.createCoupon);
  *               items:
  *                 $ref: '#/components/schemas/Coupon'
  */
-router.get("/", authMiddleware, CouponController.getAllCoupons);
+router.get("/", authMiddleware, isAdmin, CouponController.getAllCoupons);
 
 /**
  * @swagger
@@ -102,7 +102,7 @@ router.get("/", authMiddleware, CouponController.getAllCoupons);
  *       404:
  *         description: Coupon not found
  */
-router.get("/:id", authMiddleware,  CouponController.getCoupon);
+router.get("/:id", authMiddleware, isAdmin,  CouponController.getCoupon);
 
 /**
  * @swagger

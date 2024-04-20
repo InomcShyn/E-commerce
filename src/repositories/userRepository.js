@@ -1,6 +1,7 @@
 const User = require("../models/UserModel");
 const Cart = require("../models/CartModel");
 const Product = require("../models/ProductModel");
+const Coupon = require("../models/CouponModel");
 
 class UserRepository {
   async createUser(data) {
@@ -104,6 +105,25 @@ class UserRepository {
   // Method to empty user's cart
   async emptyCart(userId) {
     return await Cart.findOneAndRemove({ orderby: userId });
+  }
+
+  async applyCoupon(userId, couponName) {
+    const validCoupon = await Coupon.findOne({ name: couponName });
+    if (!validCoupon) {
+      throw new Error("Invalid Coupon");
+    }
+    
+    let { cartTotal } = await Cart.findOne({ orderby: userId}).populate("products.product");
+    console.log(cartTotal)
+    let totalAfterDiscount = (cartTotal - (cartTotal * validCoupon.discount) / 100).toFixed(2);
+
+    await Cart.findOneAndUpdate(
+      { orderby: userId },
+      { totalAfterDiscount },
+      { new: true }
+    );
+
+    return totalAfterDiscount;
   }
 }
 

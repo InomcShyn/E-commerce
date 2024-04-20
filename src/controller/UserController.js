@@ -253,6 +253,21 @@ class UserController {
       res.status(500).json({ message: "Internal server error" });
     }
   }
+
+  async applyCoupon(req, res) {
+    try {
+      const { coupon } = req.body;
+      const userId = req.user._id;
+      
+      // Call userRepository to apply the coupon
+      const totalAfterDiscount = await userRepository.applyCoupon(userId, coupon);
+
+      res.json(totalAfterDiscount);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+  
 }
 
 function generateAccessToken(payload) {

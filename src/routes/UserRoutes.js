@@ -41,5 +41,6 @@ router.delete("/empty-cart", authMiddleware, userController.emptyCart);
 router.post("/cart", authMiddleware, userController.userCart);
 
 router.get("/cart", authMiddleware, userController.getUserCart);
+router.post("/cart/applycoupon", authMiddleware, userController.applyCoupon);
 
 module.exports = router;
