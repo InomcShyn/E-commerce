@@ -2,6 +2,8 @@ const User = require("../models/UserModel");
 const Cart = require("../models/CartModel");
 const Product = require("../models/ProductModel");
 const Coupon = require("../models/CouponModel");
+const Order = require("../models/OrderModel");
+const uniqid = require("uniqid");
 
 class UserRepository {
   async createUser(data) {
@@ -124,6 +126,97 @@ class UserRepository {
     );
 
     return totalAfterDiscount;
+  }
+  async createOrder(userId, COD, couponApplied) {
+    try {
+      if (!COD) {
+        throw new Error("Create cash order failed");
+      }
+      
+      const userCart = await Cart.findOne({ orderby: userId });
+      
+      let finalAmount = 0;
+      if (couponApplied && userCart.totalAfterDiscount) {
+        finalAmount = userCart.totalAfterDiscount;
+      } else {
+        finalAmount = userCart.cartTotal;
+      }
+      const newOrder = await new Order({
+        products: userCart.products,
+        paymentIntent: {
+          id: uniqid(),
+          method: "COD",
+          amount: finalAmount,
+          status: "Cash on Delivery",
+          created: Date.now(),
+          currency: "usd",
+        },
+        orderby: userId,
+        orderStatus: "Cash on Delivery",
+      }).save();
+      const update = userCart.products.map((item) => {
+        return {
+          updateOne: {
+            filter: { _id: item.product._id },
+            update: { $inc: { quantity: -item.count, sold: +item.count } },
+          },
+        };
+      });
+      
+      await Product.bulkWrite(update, {});
+      return "success";
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async getOrders(userId) {
+    const userOrders = await Order.find({ orderby: userId })
+      .populate("products.product")
+      .populate("orderby")
+      .exec();
+    return userOrders;
+  }
+
+  async getAllOrders() {
+    try {
+      const allOrders = await Order.find()
+        .populate("products.product")
+        .populate("orderby")
+        .exec();
+      return allOrders;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async getOrderByUserId(userId) {
+    try {
+      const userOrders = await Order.find({ orderby: userId })
+        .populate("products.product")
+        .populate("orderby")
+        .exec();
+      return userOrders;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async updateOrderStatus(orderId, status) {
+    try {
+      const updatedOrder = await Order.findByIdAndUpdate(orderId,
+        {
+          orderStatus: status,
+          paymentIntent: {
+            status: status,
+          },
+        },
+        { new: true }
+      );
+      return updatedOrder;
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
 }
 

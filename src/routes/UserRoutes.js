@@ -43,4 +43,9 @@ router.post("/cart", authMiddleware, userController.userCart);
 router.get("/cart", authMiddleware, userController.getUserCart);
 router.post("/cart/applycoupon", authMiddleware, userController.applyCoupon);
 
+router.post("/cart/cash-order", authMiddleware, userController.createOrder);
+router.get("/get-orders", authMiddleware, userController.getOrders);
+router.get("/getallorders", authMiddleware, isAdmin, userController.getAllOrders);
+router.post("/getorderbyuser/:id", authMiddleware, isAdmin, userController.getAllOrders);
+router.put( "/order/update-order/:id",authMiddleware, isAdmin, userController.updateOrderStatus);
 module.exports = router;

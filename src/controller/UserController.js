@@ -267,7 +267,56 @@ class UserController {
       res.status(500).json({ message: error.message });
     }
   }
-  
+  async createOrder(req, res) {
+    try {
+      const { COD, couponApplied } = req.body;
+      const userId = req.user._id;
+      const message = await userRepository.createOrder(userId, COD, couponApplied);
+      console.log(message)
+      res.json({ message });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async getOrders(req, res) {
+    try {
+      const userId = req.user._id;
+      const orders = await userRepository.getOrders(userId);
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+  async getAllOrders(req, res) {
+    try {
+      const allOrders = await userRepository.getAllOrders();
+      res.json(allOrders);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async getOrderByUserId(req, res) {
+    try {
+      const { id } = req.params;
+      const userOrders = await userRepository.getOrderByUserId(id);
+      res.json(userOrders);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async updateOrderStatus(req, res) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const updatedOrder = await userRepository.updateOrderStatus(id, status);
+      res.json(updatedOrder);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
 }
 
 function generateAccessToken(payload) {

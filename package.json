@@ -24,7 +24,8 @@
     "mysql": "^2.18.1",
     "parser": "^0.1.4",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.0"
+    "swagger-ui-express": "^5.0.0",
+    "uniqid": "^5.4.0"
   },
   "devDependencies": {
     "chai": "^5.1.0",
