@@ -1,57 +1,53 @@
-const Coupon = require("../models/CouponModel");
-const validateMongoDbId = require("../utils/validateMongodbId");
+// BrandController.js
+const couponRepository = require("../repositories/couponRepository");
 
 class CouponController {
   async createCoupon(req, res) {
     try {
-      const newCoupon = await Coupon.create(req.body);
-      res.json(newCoupon);
+      const coupon = await couponRepository.createCoupon(req.body);
+      console.log(coupon)
+      res.status(201).json(coupon);
     } catch (error) {
-      throw new Error(error);
+      res.status(500).json({ error: "Unable to create the coupon" });
     }
   }
 
   async getAllCoupons(req, res) {
     try {
-      const coupons = await Coupon.find();
+      const coupons = await couponRepository.getAllCoupons();
       res.json(coupons);
     } catch (error) {
-      throw new Error(error);
+      res.status(500).json({ error: error.message });
     }
   }
 
   async updateCoupon(req, res) {
     const { id } = req.params;
-    validateMongoDbId(id);
     try {
-      const updatedCoupon = await Coupon.findByIdAndUpdate(id, req.body, {
-        new: true,
-      });
+      const updatedCoupon = await couponRepository.updateCoupon(id, req.body);
       res.json(updatedCoupon);
     } catch (error) {
-      throw new Error(error);
+      res.status(500).json({ error: error.message });
     }
   }
 
   async deleteCoupon(req, res) {
     const { id } = req.params;
-    validateMongoDbId(id);
     try {
-      const deletedCoupon = await Coupon.findByIdAndDelete(id);
+      const deletedCoupon = await couponRepository.deleteCoupon(id);
       res.json(deletedCoupon);
     } catch (error) {
-      throw new Error(error);
+      res.status(500).json({ error: error.message });
     }
   }
 
   async getCoupon(req, res) {
     const { id } = req.params;
-    validateMongoDbId(id);
     try {
-      const getCoupon = await Coupon.findById(id);
+      const getCoupon = await couponRepository.getCouponById(id);
       res.json(getCoupon);
     } catch (error) {
-      throw new Error(error);
+      res.status(500).json({ error: error.message });
     }
   }
 }

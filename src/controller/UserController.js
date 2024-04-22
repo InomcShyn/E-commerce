@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const userRepository = require("../repositories/userRepository");
-const productRepository = require("../repositories/productRepository");
 const dotenv = require("dotenv");
 
 dotenv.config();

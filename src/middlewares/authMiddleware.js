@@ -36,7 +36,7 @@ const authMiddleware = asyncHandler(async (req, res, next) => {
       });
     } else {
       req.user = user; 
-      req.user.role = user.role 
+      req.user.role = user.role;
       next();
     }
   });
