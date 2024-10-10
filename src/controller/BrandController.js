@@ -1,5 +1,5 @@
 // BrandController.js
-const brandRepository = require("../repositories/brandRepository");
+const brandRepository = require("../repositories/BrandRepository");
 
 class BrandController {
   async createBrand(req, res) {
@@ -41,10 +41,10 @@ class BrandController {
     }
   }
 
-  async getallBrand(req, res) {
+  async getAllBrand(req, res) {
     try {
-      const getallBrand = await brandRepository.getAllBrands();
-      res.json(getallBrand);
+      const getAllBrand = await brandRepository.getAllBrands();
+      res.json(getAllBrand);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }

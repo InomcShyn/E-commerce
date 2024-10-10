@@ -1,57 +1,58 @@
-const Category = require("../models/BCatModel");
-const validateMongoDbId = require("../utils/validateMongodbId");
+// controllers/BCatController.js
+const BCatRepository = require("../repositories/bCatRepository");
+
 
 class BCatController {
   async createCategory(req, res) {
     try {
-      const newCategory = await Category.create(req.body);
+      const newCategory = await BCatRepository.createCategory(req.body);
       res.json(newCategory);
     } catch (error) {
-      throw new Error(error);
+      console.error(error);
+      res.status(500).json({ message: "Failed to create category" });
     }
   }
 
   async updateCategory(req, res) {
     const { id } = req.params;
-    validateMongoDbId(id);
     try {
-      const updatedCategory = await Category.findByIdAndUpdate(id, req.body, {
-        new: true,
-      });
+      const updatedCategory = await BCatRepository.updateCategory(id, req.body);
       res.json(updatedCategory);
     } catch (error) {
-      throw new Error(error);
+      console.error(error);
+      res.status(500).json({ message: "Failed to update category" });
     }
   }
 
   async deleteCategory(req, res) {
     const { id } = req.params;
-    validateMongoDbId(id);
     try {
-      const deletedCategory = await Category.findByIdAndDelete(id);
+      const deletedCategory = await BCatRepository.deleteCategory(id);
       res.json(deletedCategory);
     } catch (error) {
-      throw new Error(error);
+      console.error(error);
+      res.status(500).json({ message: "Failed to delete category" });
     }
   }
 
   async getCategory(req, res) {
     const { id } = req.params;
-    validateMongoDbId(id);
     try {
-      const getaCategory = await Category.findById(id);
-      res.json(getaCategory);
+      const category = await BCatRepository.getCategoryById(id);
+      res.json(category);
     } catch (error) {
-      throw new Error(error);
+      console.error(error);
+      res.status(500).json({ message: "Failed to get category" });
     }
   }
 
-  async getallCategory(req, res) {
+  async getAllCategories(req, res) {
     try {
-      const getallCategory = await Category.find();
-      res.json(getallCategory);
+      const categories = await BCatRepository.getAllCategories();
+      res.json(categories);
     } catch (error) {
-      throw new Error(error);
+      console.error(error);
+      res.status(500).json({ message: "Failed to get categories" });
     }
   }
 }

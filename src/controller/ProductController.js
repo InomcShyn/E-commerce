@@ -1,13 +1,57 @@
 // controllers/productController.js
 const productRepository = require("../repositories/productRepository");
 const userRepository = require("../repositories/userRepository");
-
+const dotenv = require("dotenv");
+const cloudinary = require('cloudinary').v2;
+dotenv.config();
 class ProductController {
   async createProduct(req, res) {
     try {
-      const product = await productRepository.createProduct(req.body);
+      const { files } = req;
+      const images = [];
+      // Lấy các file có field là images
+      for (const file of files) {
+          if (file.fieldname.includes("images")) {
+              images.push(file);
+          }
+      }
+      // Xử lý lỗi
+      for (const file of images) {
+        if (file.size / (1024 * 1024) > 30)
+        return res.status(401).json({ error: "Cannot upload file with size more than 30mb" });
+        if (!file.mimetype.includes('image'))
+        return res.status(401).json({ error: "Field thumnail must be image type" });
+      }
+      const listImagesUrl = [];
+      cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_DB_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+        secure: true,
+      });
+      // Upload file
+      for (const image of images) {
+        const result = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                { folder: process.env.CLOUDINARY_FOLDER_IMAGE, resource_type: 'image' },
+                (error, result) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(result);
+                    }
+                }
+            ).end(image.buffer);
+        });
+        listImagesUrl.push({url : result.url, public_id : result.public_id});
+    }
+      const product = await productRepository.createProduct({
+        ...req.body,
+        images : listImagesUrl
+      });
       res.status(201).json(product);
     } catch (err) {
+      console.log(err);
       res.status(500).json({ error: "Unable to create the product" });
     }
   }
@@ -62,7 +106,8 @@ class ProductController {
   
   async addToWishlist(req,res) {
     try {
-      const {userId,productId} = req.body
+      const userId = req.user.id;
+      const {productId} = req.body;
       const user = await userRepository.getUserById(userId);
       if (!user) {
         throw new Error("User not found");

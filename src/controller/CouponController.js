@@ -5,7 +5,6 @@ class CouponController {
   async createCoupon(req, res) {
     try {
       const coupon = await couponRepository.createCoupon(req.body);
-      console.log(coupon)
       res.status(201).json(coupon);
     } catch (error) {
       res.status(500).json({ error: "Unable to create the coupon" });

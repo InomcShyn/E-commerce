@@ -1,5 +1,4 @@
 const Category = require("../models/ProdcategoryModel");
-const validateMongoDbId = require("../utils/validateMongodbId");
 
 class ProdcategoryController {
   async createCategory(req, res) {
@@ -13,7 +12,6 @@ class ProdcategoryController {
 
   async updateCategory(req, res) {
     const { id } = req.params;
-    validateMongoDbId(id);
     try {
       const updatedCategory = await Category.findByIdAndUpdate(id, req.body, {
         new: true,
@@ -26,7 +24,6 @@ class ProdcategoryController {
 
   async deleteCategory(req, res) {
     const { id } = req.params;
-    validateMongoDbId(id);
     try {
       const deletedCategory = await Category.findByIdAndDelete(id);
       res.json(deletedCategory);
@@ -37,7 +34,6 @@ class ProdcategoryController {
 
   async getCategory(req, res) {
     const { id } = req.params;
-    validateMongoDbId(id);
     try {
       const getaCategory = await Category.findById(id);
       res.json(getaCategory);

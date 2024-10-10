@@ -72,6 +72,18 @@ class UserController {
       res.status(500).json({ error: "Unable to log in" });
     }
   }
+  async logoutUser(req, res) {
+    try {
+      const refreshToken = req.headers.authorization.split(" ")[1]; 
+      
+      // Clear the refresh token from the database
+      await userRepository.clearRefreshToken(refreshToken);
+
+      res.sendStatus(204); // No Content
+    } catch (err) {
+      res.status(500).json({ error: "Unable to logout" });
+    }
+  }
   
   async refreshAccessToken(req, res) {
     const refreshToken = req.header("Refresh-Token");
@@ -199,20 +211,20 @@ class UserController {
     }
   }
 
-  async getWishlist(req, res) {
-    const userId = req.user;
-    try {
-      const user = await userRepository.getUserWishlist(userId);
-      res.json(user);
-    } catch (err) {
-      res.status(400).json({ error: err.message });
-    }
-  }
+  // async getWishlist(req, res) {
+  //   const userId = req.user;
+  //   try {
+  //     const user = await userRepository.getUserWishlist(userId);
+  //     res.json(user);
+  //   } catch (err) {
+  //     res.status(400).json({ error: err.message });
+  //   }
+  // }
 
   async getWishlist(req, res) {
-    const userId = req.user._id;
+    const userId = req.user.id;
     try {
-      const wishlist = await userRepository.getWishlist(userId);
+      const wishlist = await userRepository.getUserWishlist(userId);
       const user = await userRepository.getUserById(userId);
       res.json({ user, wishlist });
     } catch (err) {
@@ -222,7 +234,7 @@ class UserController {
 
   async userCart(req, res) {
     const { cart } = req.body;
-    const userId = req.user._id;
+    const userId = req.user.id;
     try {
       const userCart = await userRepository.saveUserCart(userId, cart);
       res.json(userCart);
@@ -233,7 +245,7 @@ class UserController {
 
   // Method to get user's cart
   async getUserCart(req, res) {
-    const userId = req.user._id;
+    const userId = req.user.id;
     try {
       const userCart = await userRepository.getUserCart(userId);
       res.json(userCart);
@@ -253,6 +265,31 @@ class UserController {
     }
   }
 
+  // delete product in cart
+  async deleteCartProduct(req, res) {
+    const userId = req.user.id;
+    const { productId } = req.params;
+    try {
+      await userRepository.deleteCartProduct(userId, productId);
+      res.json({ message: "Delete product successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  // update product quantity
+  async updateCartProductQuantity(req, res) {
+    const userId = req.user.id;
+    const { productId } = req.params;
+    const { quantity } = req.body;
+    try {
+      await userRepository.updateCartProductQuantity(userId, productId, quantity);
+      res.json({ message: "Delete product successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
   async applyCoupon(req, res) {
     try {
       const { coupon } = req.body;
@@ -266,13 +303,24 @@ class UserController {
       res.status(500).json({ message: error.message });
     }
   }
+  // async createOrder(req, res) {
+  //   try {
+  //     const { COD, couponApplied } = req.body;
+  //     const userId = req.user._id;
+  //     const message = await userRepository.createOrder(userId, COD, couponApplied);
+  //     console.log(message)
+  //     res.json({ message });
+  //   } catch (error) {
+  //     res.status(500).json({ message: error.message });
+  //   }
+  // }
+
   async createOrder(req, res) {
     try {
-      const { COD, couponApplied } = req.body;
-      const userId = req.user._id;
-      const message = await userRepository.createOrder(userId, COD, couponApplied);
-      console.log(message)
-      res.json({ message });
+      const userId = req.user.id;
+      const { couponApplied, name, email, phone, address, payment } = req.body;
+      const order = await userRepository.createOrder(userId, couponApplied, name, email, phone, address, payment);
+      res.json(order);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -287,10 +335,31 @@ class UserController {
       res.status(500).json({ message: error.message });
     }
   }
+
+  async getOrderDetail(req, res) {
+    try {
+      const { orderId } = req.params;
+      const orderDetail = await userRepository.getOrderDetail(orderId);
+      res.json(orderDetail);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
   async getAllOrders(req, res) {
     try {
       const allOrders = await userRepository.getAllOrders();
       res.json(allOrders);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async getMyOrders(req, res) {
+    try {
+      const userId = req.user.id;
+      const myOrders = await userRepository.getMyOrders(userId);
+      res.json(myOrders);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -316,6 +385,33 @@ class UserController {
       res.status(500).json({ message: error.message });
     }
   }
+
+  async getProfile (req, res) {
+    try {
+      const userId = req.user.id;
+      const user = await userRepository.getUserById(userId);
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async createPaymentUrl(req, res) {
+    try {
+      const ipAddr =
+        req.headers["x-forwarded-for"] ||
+        req.connection.remoteAddress ||
+        req.socket.remoteAddress ||
+        req.connection.socket.remoteAddress;
+      const { orderId, amount, returnUrl } = req.body;
+
+      const paymentUrl = await userRepository.createPaymentUrl(amount, ipAddr, orderId, returnUrl);
+
+      res.json(paymentUrl);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
 }
 
 function generateAccessToken(payload) {
@@ -325,5 +421,7 @@ function generateAccessToken(payload) {
 function generateRefreshToken(payload) {
   return jwt.sign(payload, REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
 }
+
+
 
 module.exports = new UserController();
